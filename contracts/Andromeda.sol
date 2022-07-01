@@ -45,7 +45,6 @@ contract Andromeda{
     // 0 amount is accepted
     function transfer(address _to, uint _value) public returns(bool) {
         require(balanceOf(msg.sender) >= _value,"Balance too low");
-        require(balanceOf(msg.sender) >= _value,"Balance too lowwww");
         balances[msg.sender] = balances[msg.sender] - _value;
         balances[_to] = balances[_to] + _value;
         emit Transfer(msg.sender, _to, _value);
