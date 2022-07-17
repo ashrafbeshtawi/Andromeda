@@ -1,0 +1,26 @@
+{
+  "name": "andromeda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashrafbeshtawi/Andromeda.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashrafbeshtawi/Andromeda/issues"
+  },
+  "homepage": "https://github.com/ashrafbeshtawi/Andromeda#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.0"
+  }
+}
