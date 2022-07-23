@@ -39,7 +39,7 @@ contract Admin{
     // check if there is avaliable place for new admin
     // returns index for the new admin in the array
     // else returns -1
-    function hasFreeSpaceForAdmin() private view returns(int) {
+    function getFreeAdminIndex() private view returns(int) {
         for (uint index = 0; index < admin.length; index++) {
             if (admin[index] == address(0)) {
                 return int(index);
@@ -51,7 +51,7 @@ contract Admin{
     // check if there is available place for new vote
     // returns index for the new vote it the array
     // else returns -1
-    function hasFreeSpaceForVote() private returns(int) {
+    function getFreeVoteIndex() private returns(int) {
         for (uint index = 0; index < votes.length; index++) {
             // check for expired votes
             if (votes[index].endDate <= block.timestamp) {
