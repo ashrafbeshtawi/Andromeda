@@ -4,6 +4,7 @@ contract Admin{
     struct Vote {
         uint id;
         address targetAddress;
+        uint votingPeriod;
         uint target;
         mapping(address => bool) voters;
         uint NumberOfApprovals;
@@ -26,10 +27,6 @@ contract Admin{
         admin[0] = msg.sender;
         votePeriod = 0;
         minVotePeriod = 0;
-    }
-
-    function addAdmin(address _admin) public {
-        admin[admin.length] = _admin;
     }
 
     function getAdmin() public view returns(address[10] memory _admin) {
@@ -71,8 +68,27 @@ contract Admin{
         require(votes[_voteIndex].endDate <= block.timestamp, "Vote is not ended");
         require(votes[_voteIndex].endDate != 0, "Vote is not initialized");
         if (votes[_voteIndex].NumberOfApprovals > votes[_voteIndex].NumberOfDisapprovals) {
-            // TO-DO
             // approve vote
+            if (votes[_voteIndex].target == 0) {
+                // add admin
+                admin[(uint) (getFreeAdminIndex())] = votes[_voteIndex].targetAddress;
+            } else if (votes[_voteIndex].target == 1) {
+                // remove admin
+                for (uint index = 0; index < admin.length; index++) {
+                    if (admin[index] == votes[_voteIndex].targetAddress) {
+                        admin[index] = address(0);
+                    }
+                }
+            } else if (votes[_voteIndex].target == 2) {
+                // change library address
+                libraryAddress = votes[_voteIndex].targetAddress;
+            } else if (votes[_voteIndex].target == 3) {
+                // change treasury address
+                treasuryAddress = votes[_voteIndex].targetAddress;
+            } else if (votes[_voteIndex].target == 4) {
+                // change vote period
+                votePeriod = votes[_voteIndex].votingPeriod;
+            }
             
         }
         // move vote to archive (actually making a copy, without the voters to not make this call too expensive)
@@ -83,8 +99,38 @@ contract Admin{
         votesArchive[voteId].NumberOfApprovals = votes[_voteIndex].NumberOfApprovals;
         votesArchive[voteId].NumberOfDisapprovals = votes[_voteIndex].NumberOfDisapprovals;
         votesArchive[voteId].startDate = votes[_voteIndex].startDate;
-        votesArchive[voteId].endDate = votes[_voteIndex].endDate;    
+        votesArchive[voteId].endDate = votes[_voteIndex].endDate;  
+        votesArchive[voteId].votingPeriod = votes[_voteIndex].votingPeriod;    
+  
         // mark the vote in the array as ended so that it will be replaced in the future
         votes[_voteIndex].endDate = 0;   
+    }
+
+
+    // add new vote (only admin can do this)
+    // returns vote id
+    function addVote(address _targetAddress, uint _target, uint _votingPeriod) public returns(uint) {
+        require(isAdmin(), "Only admin can add vote");
+        require(_votingPeriod >= minVotePeriod, "Voting period is too short");
+        int freeVoteIndex = getFreeVoteIndex();
+        require(freeVoteIndex != -1, "No free vote index");
+        uint voteId = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _targetAddress, _target, _votingPeriod)));
+        votes[(uint) (freeVoteIndex)].id = voteId;
+        votes[(uint) (freeVoteIndex)].targetAddress = _targetAddress;
+        votes[(uint) (freeVoteIndex)].target = _target;
+        votes[(uint) (freeVoteIndex)].votingPeriod = _votingPeriod;
+        votes[(uint) (freeVoteIndex)].startDate = block.timestamp;
+        votes[(uint) (freeVoteIndex)].endDate = block.timestamp + _votingPeriod * DAY;
+        return voteId;
+    }
+
+    // checks if caller is admin
+    function isAdmin() public view returns(bool) {
+        for (uint index = 0; index < admin.length; index++) {
+            if (admin[index] == msg.sender) {
+                return true;
+            }
+        }
+        return false;
     }
 }
