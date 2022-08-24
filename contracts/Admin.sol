@@ -12,7 +12,7 @@ contract Admin{
         uint startDate;
         uint endDate;
     }
-    // Date constants   
+    // Seconds in one day   
     uint public DAY = 86400;
     // Main properties of the contract
     address[10] admin;
