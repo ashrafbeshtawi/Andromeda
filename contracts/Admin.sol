@@ -24,10 +24,9 @@ contract Admin{
     uint public votePeriod;
     uint public minVotePeriod;
 
-    constructor() {
+    constructor(uint minVotingPeriod) {
         admin[0] = msg.sender;
-        votePeriod = 0;
-        minVotePeriod = 0;
+        minVotePeriod = votePeriod = minVotingPeriod;
     }
 
     function getAdmin() public view returns(address[10] memory _admin) {
