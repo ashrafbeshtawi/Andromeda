@@ -1,12 +1,10 @@
-const Admin = artifacts.require("Admin");
+const { assert } = require('chai');
 
+const Admin = artifacts.require("Admin");
+const DAY = 86400;
 require('chai')
  .use(require('chai-as-promised'))
  .should();
-
-//const chai = require("chai");
-//const ChaiTruffle = require("chai-truffle");
-//chai.use(ChaiTruffle);
 
 // testing the deplyment process
 contract('Admin', function (accounts) {
@@ -28,7 +26,8 @@ contract('Admin', function (accounts) {
     }
   });
 
-  it("Testing AddVote", async function () {
+  it("Testing AddVote basic", async function () {
+    return;
     const admin = await Admin.new(7);
     // call as not admin
     await admin.addVote(accounts[1], 1, 1, {from: accounts[2]}).should.be.rejectedWith('Only admin can add vote');
@@ -39,9 +38,20 @@ contract('Admin', function (accounts) {
       await admin.addVote(accounts[1], 1, 10, {from: accounts[0]})
     }
     await admin.addVote(accounts[1], 1, 10, {from: accounts[0]}).should.be.rejectedWith('No free vote index')
-
-
   });
+
+  it("Testing AddVote voting period", async function () {
+    const admin = await Admin.new(7);
+    await admin.addVote(accounts[1], 1, 7, {from: accounts[0]})
+    const event = await admin.getPastEvents('VoteCreated', {fromBlock:0, toBlock:'latest'});
+    assert.equal(event.length, 1);
+    const indexOfVote = parseInt(event[0].returnValues.index);
+    const createdVote = await admin.votes(indexOfVote);
+    const startDate = createdVote.startDate.toNumber();
+    const endDate = createdVote.endDate.toNumber();
+    assert.equal(endDate, startDate + (7 * DAY))
+  });
+
 }
 );
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT 
 pragma solidity ^0.8.14;
 
 contract Admin{
@@ -23,6 +24,9 @@ contract Admin{
     // in Days
     uint public votePeriod;
     uint public minVotePeriod;
+
+    // Events
+    event VoteCreated(uint index);
 
     constructor(uint minVotingPeriod) {
         admin[0] = msg.sender;
@@ -80,19 +84,21 @@ contract Admin{
 
     // add new vote (only admin can do this)
     // returns vote id
-    function addVote(address _targetAddress, uint _target, uint _votingPeriod) public returns(uint) {
+    function addVote(address _targetAddress, uint _target, uint _votingPeriod) public returns(int) {
         require(isAdmin(), "Only admin can add vote");
         require(_votingPeriod >= votePeriod, "Voting period is too short");
         int freeVoteIndex = getFreeVoteIndex();
+        uint castedIndex = (uint) (freeVoteIndex) ;
         require(freeVoteIndex != -1, "No free vote index");
         uint voteId = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _targetAddress, _target, _votingPeriod)));
-        votes[(uint) (freeVoteIndex)].id = voteId;
-        votes[(uint) (freeVoteIndex)].targetAddress = _targetAddress;
-        votes[(uint) (freeVoteIndex)].target = _target;
-        votes[(uint) (freeVoteIndex)].votingPeriod = _votingPeriod;
-        votes[(uint) (freeVoteIndex)].startDate = block.timestamp;
-        votes[(uint) (freeVoteIndex)].endDate = block.timestamp + _votingPeriod * DAY;
-        return voteId;
+        votes[castedIndex].id = voteId;
+        votes[castedIndex].targetAddress = _targetAddress;
+        votes[castedIndex].target = _target;
+        votes[castedIndex].votingPeriod = _votingPeriod;
+        votes[castedIndex].startDate = block.timestamp;
+        votes[castedIndex].endDate = block.timestamp + _votingPeriod * DAY;
+        emit VoteCreated(castedIndex);
+        return freeVoteIndex;
     }
 
     // checks if caller is admin
