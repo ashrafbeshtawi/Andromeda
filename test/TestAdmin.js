@@ -27,7 +27,6 @@ contract('Admin', function (accounts) {
   });
 
   it("Testing AddVote basic", async function () {
-    return;
     const admin = await Admin.new(7);
     // call as not admin
     await admin.addVote(accounts[1], 1, 1, {from: accounts[2]}).should.be.rejectedWith('Only admin can add vote');
