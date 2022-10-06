@@ -7,7 +7,7 @@ contract Admin{
         address targetAddress;
         uint votingPeriod;
         uint target;
-        mapping(address => bool) voters;
+        mapping(address => uint) voters;
         uint NumberOfApprovals;
         uint NumberOfDisapprovals;
         uint startDate;
@@ -24,13 +24,56 @@ contract Admin{
     // in Days
     uint public votePeriod;
     uint public minVotePeriod;
+    uint public minStableBalancePeriod;
 
     // Events
     event VoteCreated(uint index);
+    event Voted(address voter, uint vote);
 
-    constructor(uint minVotingPeriod) {
+    constructor(uint _minVotingPeriod, uint _minStableBalancePeriod) {
         admin[0] = msg.sender;
-        minVotePeriod = votePeriod = minVotingPeriod;
+        minVotePeriod = votePeriod = _minVotingPeriod;
+        minStableBalancePeriod = _minStableBalancePeriod;
+    }
+
+    // add/change the vote of specific holder on specific vote
+    // vote : 0 -> no vote
+    //        1 -> support the vote
+    //        2 -> reject the vote
+    //        * -> ignore
+    // to be able to vote you must:
+    //  1- be holder.
+    //  2- have not moved any of your Balance since 
+    function vote(uint _voteIndex, uint _vote) public {
+        // no real connection for now
+        (uint balance, uint holdingTime) = getBalance();
+
+        require(balance > 0, "Balance too low");
+        require(holdingTime >= minStableBalancePeriod, "Holding period too short");
+        require(isVoteInitialised(_voteIndex), "Vote is not initialized");
+
+        uint currentVote = votes[_voteIndex].voters[msg.sender];
+        // new vote equals old vote then do nothing
+        if (currentVote == _vote) {
+            return;
+        }
+        // old vote need be changed -> first undo old vote
+        // if support then remove 1 from Approvals
+        if (currentVote == 1) {
+            votes[_voteIndex].NumberOfApprovals = votes[_voteIndex].NumberOfApprovals - 1;
+        // if against the proposal then remove 1 from Disapprovals
+        } else if (currentVote == 2) {
+            votes[_voteIndex].NumberOfDisapprovals = votes[_voteIndex].NumberOfDisapprovals - 1;
+        }
+        // now it is safe to add the new vote
+        if (_vote == 1) {
+            votes[_voteIndex].NumberOfApprovals = votes[_voteIndex].NumberOfApprovals + 1;
+        } else if (_vote == 2) {
+            votes[_voteIndex].NumberOfDisapprovals = votes[_voteIndex].NumberOfDisapprovals + 1;
+        }
+        // update state of this voter
+        votes[_voteIndex].voters[msg.sender] = _vote;
+        emit Voted(msg.sender, _vote);
     }
 
     function getAdmin() public view returns(address[10] memory _admin) {
@@ -40,8 +83,8 @@ contract Admin{
     // resolve vote if ended
     // vote ends when endDate is smaller than current block timestamp
     function resolveVote(uint _voteIndex) public {
-        require(votes[_voteIndex].endDate <= block.timestamp, "Vote is not ended");
-        require(votes[_voteIndex].endDate != 0, "Vote is not initialized");
+        require(votes[_voteIndex].endDate <= block.timestamp, "Vote has not ended");
+        require(isVoteInitialised(_voteIndex), "Vote is not initialized");
         if (votes[_voteIndex].NumberOfApprovals > votes[_voteIndex].NumberOfDisapprovals) {
             // approve vote
             // add admin
@@ -138,6 +181,17 @@ contract Admin{
             }
         }
         return -1;
+    }
+
+    // checks if vote is initialisied
+    function isVoteInitialised(uint voteIndex) private view returns(bool) {
+        return votes[voteIndex].endDate != 0;
+    }
+
+    // establishes connection with library & gets the balance of caller
+    // and the number of days the user have been hodling :)
+    function getBalance() private returns(uint, uint) {
+        return (1, 7);
     }
 }
 
