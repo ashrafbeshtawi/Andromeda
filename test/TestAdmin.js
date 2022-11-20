@@ -83,6 +83,7 @@ contract('Admin', function (accounts) {
     await admin.resolveVote(indexOfVote + 1).should.be.rejectedWith('Vote is not initialized')
   });
 
+
   it("Testing Vote", async function () {
     const id = 5;
     if (checkIsTestExcluded(id)) {
