@@ -104,6 +104,13 @@ contract('Admin', function (accounts) {
 }
 );
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// HELP FUNCTIONS ///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // add vote & return its id
 async function addVote(contract, targetAddress, target, votingPeriod, accounts) {
   await contract.addVote(targetAddress, target, votingPeriod, {from: accounts[0]})
@@ -111,10 +118,13 @@ async function addVote(contract, targetAddress, target, votingPeriod, accounts) 
   return parseInt(event[0].returnValues.index);
 }
 
+// checks if a given vote has specific details given in the arguments
 async function checkVoteState(contract, indexOfVote, approvals, disapprovals, address, stateOfAddress) {
   const vote = await contract.votes(indexOfVote);
   const NumberOfApprovals = vote.NumberOfApprovals.toNumber();
   const NumberOfDisapprovals = vote.NumberOfDisapprovals.toNumber();
+  assert.equal(NumberOfApprovals, approvals);
+  assert.equal(NumberOfDisapprovals, disapprovals);
   const adressState = 0;//vote.voters[address];
   console.log('testing', NumberOfApprovals, NumberOfDisapprovals, adressState);
 
