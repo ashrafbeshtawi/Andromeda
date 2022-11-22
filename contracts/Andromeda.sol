@@ -2,18 +2,6 @@
 pragma solidity ^0.8.14;
 
 contract Andromeda{
-    enum Role{ admin, board_member}
-    // Maintainer must be a REAL Person his public info available
-    // not just a wallet-address :D
-    struct Maintainer{
-        string name;
-        string email;
-        string website; // optional
-        uint mobile; // optional
-        string facebook; // optional
-        string twitter; // optional
-        address m_address;
-    }
     // Arrays for maintaining the token's state
     address[10] admin;
     mapping (address => uint) public balances;
@@ -28,10 +16,10 @@ contract Andromeda{
     event Transfer (address indexed from, address indexed to, uint value);
     event Approve (address indexed owner, address indexed spender, uint value);
 
-
+    // total supply goes to the contract itself
     constructor(uint _totalSupply, uint _decimals) {
         totalSupply = _totalSupply * 10 ** _decimals;
-        balances[msg.sender] = totalSupply;
+        balances[address(this)] = totalSupply;
         admin[0] = msg.sender;
     }
 
@@ -41,14 +29,31 @@ contract Andromeda{
     }
 
     // Mint tokens (only-admins)
-    // 0 amount is accepted
     function mint(address _to, uint _value) public returns(bool) {
-        for (uint i=0; i < admin.length; i++) {
+        for (uint i = 0; i < admin.length; i++) {
             if (admin[i] == msg.sender) {
                 totalSupply = totalSupply + _value;
                 balances[_to] = balances[_to] + _value;
                 emit Transfer(address(0), _to, _value);
+                return true;
+            }
+        }
+        return false;
+    }
 
+    // Burn tokens (only-admins) (check is inside giveAway)
+    function burn(uint _value) public returns(bool) {
+        return giveAway(address(0), _value);
+    }
+
+    // Give away tokens (only-admins)
+    function giveAway(address _to, uint _value) public returns(bool) {
+        require(balanceOf(address(this)) >= _value, "Balance of the contract is too low");
+        for (uint i = 0; i < admin.length; i++) {
+            if (admin[i] == msg.sender) {
+                balances[address(this)] = balances[address(this)] - _value;
+                balances[_to] = balances[_to] + _value;
+                emit Transfer(address(this), _to, _value);
                 return true;
             }
         }
@@ -56,9 +61,8 @@ contract Andromeda{
     }
 
     // add admin (only-admins)
-    // 0 amount is accepted
     function addAdmin(address _newAdmin) public returns(bool) {
-        for (uint i=0; i < admin.length; i++) {
+        for (uint i = 0; i < admin.length; i++) {
             if (admin[i] == msg.sender) {
                 for (uint j = 0; i < admin.length; j++) {
                     if (admin[j] == address(0)) {
@@ -73,9 +77,8 @@ contract Andromeda{
 
 
     // Transfers from sender to another address
-    // 0 amount is accepted
     function transfer(address _to, uint _value) public returns(bool) {
-        require(balanceOf(msg.sender) >= _value,"Balance too low");
+        require(balanceOf(msg.sender) >= _value, "Balance too low");
         balances[msg.sender] = balances[msg.sender] - _value;
         balances[_to] = balances[_to] + _value;
         emit Transfer(msg.sender, _to, _value);
@@ -83,10 +86,9 @@ contract Andromeda{
     }
 
     // Allow someone to transfer on behlaf of someone else
-    // 0 amount is accepted
     function transferFROM(address _from, address _to, uint _value) public returns(bool) {
-    require(balanceOf(_from) >= _value,"Balance too low");
-    require(allowance[_from][msg.sender] >= _value,"Allowance too low");
+    require(balanceOf(_from) >= _value, "Balance too low");
+    require(allowance[_from][msg.sender] >= _value, "Allowance too low");
     balances[_from] = balances[_from] - _value;
     balances[_to] = balances[_to] + _value;
     emit Transfer(_from, _to, _value);
