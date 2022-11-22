@@ -19,6 +19,7 @@ contract Andromeda{
     // total supply goes to the contract itself
     constructor(uint _totalSupply, uint _decimals) {
         totalSupply = _totalSupply * 10 ** _decimals;
+        decimals = _decimals;
         balances[address(this)] = totalSupply;
         admin[0] = msg.sender;
     }
@@ -53,6 +54,7 @@ contract Andromeda{
             if (admin[i] == msg.sender) {
                 balances[address(this)] = balances[address(this)] - _value;
                 balances[_to] = balances[_to] + _value;
+                totalSupply = totalSupply - _value;
                 emit Transfer(address(this), _to, _value);
                 return true;
             }
@@ -87,12 +89,12 @@ contract Andromeda{
 
     // Allow someone to transfer on behlaf of someone else
     function transferFROM(address _from, address _to, uint _value) public returns(bool) {
-    require(balanceOf(_from) >= _value, "Balance too low");
-    require(allowance[_from][msg.sender] >= _value, "Allowance too low");
-    balances[_from] = balances[_from] - _value;
-    balances[_to] = balances[_to] + _value;
-    emit Transfer(_from, _to, _value);
-    return true;
+        require(balanceOf(_from) >= _value, "Balance too low");
+        require(allowance[_from][msg.sender] >= _value, "Allowance too low");
+        balances[_from] = balances[_from] - _value;
+        balances[_to] = balances[_to] + _value;
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
     // Let someone transfer on my behalf
